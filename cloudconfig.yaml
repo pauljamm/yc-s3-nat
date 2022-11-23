@@ -1,0 +1,30 @@
+#cloud-config
+datasource:
+  Ec2:
+    strict_id: false
+ssh_pwauth: no
+users:
+  - name: yc-user
+    sudo: ALL=(ALL) NOPASSWD:ALL
+    shell: /bin/bash
+    groups: wheel
+    ssh_authorized_keys:
+      - ${ssh_public_key}
+write_files:
+  - path: /etc/iptables/rules.v4
+    content: |
+      *filter
+      :INPUT ACCEPT [0:0]
+      :FORWARD ACCEPT [0:0]
+      :OUTPUT ACCEPT [1:52]
+      COMMIT
+      *nat
+      :PREROUTING ACCEPT [0:0]
+      :INPUT ACCEPT [0:0]
+      :OUTPUT ACCEPT [1:280]
+      :POSTROUTING ACCEPT [0:0]
+      -A PREROUTING -i eth0 -p tcp -m tcp --dport 443 -j DNAT --to-destination ${s3_ip}:443
+      -A POSTROUTING -o eth0 -j MASQUERADE
+      COMMIT
+runcmd:
+  - iptables-restore /etc/iptables/rules.v4
