@@ -1,4 +1,4 @@
-#cloud-config
+#cloud-config       -A POSTROUTING -o eth0 -p tcp -m tcp --dport 443 -j MASQUERADE
 datasource:
   Ec2:
     strict_id: false
@@ -16,6 +16,9 @@ write_files:
       *filter
       :INPUT ACCEPT [0:0]
       :FORWARD ACCEPT [0:0]
+      %{ for e in endpoints ~}
+      -A FORWARD -i eth0 -p tcp --dport ${e.port} -j ACCEPT
+      %{ endfor }
       :OUTPUT ACCEPT [1:52]
       COMMIT
       *nat
@@ -23,8 +26,11 @@ write_files:
       :INPUT ACCEPT [0:0]
       :OUTPUT ACCEPT [1:280]
       :POSTROUTING ACCEPT [0:0]
-      -A PREROUTING -i eth0 -p tcp -m tcp --dport 443 -j DNAT --to-destination ${s3_ip}:443
-      -A POSTROUTING -o eth0 -j MASQUERADE
+      %{ for e in endpoints ~}
+      -A PREROUTING -p tcp -m tcp --dport ${e.port} -j DNAT --to-destination ${e.ip}:443
+      %{ endfor }
+      -A POSTROUTING -p tcp -m tcp --dport 443 -j MASQUERADE
       COMMIT
 runcmd:
   - iptables-restore /etc/iptables/rules.v4
+  
