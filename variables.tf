@@ -1,7 +1,19 @@
 variable "node_count" {
   type    = number
   description = "Number of nat vms to create"
-  default = 1
+  default = 3
+}
+
+variable "node_cores" {
+  type = number
+  description = "CPU count for NAT nodes"
+  default = 2
+}
+
+variable "node_ram" {
+  type = number
+  description = "RAM ammount for NAT nodes"
+  default = 4
 }
 
 variable "name_preffix" {
@@ -26,12 +38,6 @@ variable "subnet_ids" {
   default     = []
 }
 
-variable "s3_ip" {
-  type        = string
-  description = "Yandex Cloud S3 IP address"
-  default     = "213.180.193.243"
-}
-
 variable "yc_availability_zones" {
   type = list(string)
   default = [
@@ -41,3 +47,33 @@ variable "yc_availability_zones" {
   ]
 }
 
+# endpoint and unique custom target group port to be used
+variable "yc_endpoints_struct" {
+  type = list(map(string))
+  default = [
+    {
+      name = "storage"
+      ip = "213.180.193.243"
+      port = "8001"
+      endpoint = "storage.yandexcloud.net"
+      },
+    {
+      name = "monitoring"
+      ip = "158.160.59.216"#"213.180.193.8"
+      port = "8002"
+      endpoint = "monitoring.api.cloud.yandex.net"
+      },
+    {
+      name = "api"
+      ip = "84.201.181.26"
+      port = "8003"
+      endpoint = "api.cloud.yandex.net  dataproc-ui.yandexcloud.net dataproc-manager.api.cloud.yandex.net"
+      },
+    {
+      name = "logging"
+      ip = "84.201.181.184"
+      port = "8004"
+      endpoint = "ingester.logging.yandexcloud.net"
+    }
+  ]
+}
